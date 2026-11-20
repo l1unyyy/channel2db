@@ -72,3 +72,30 @@ def find(uid, title, performer):
                        (uid, norm)).fetchone()
 def count():
     return con.execute("SELECT COUNT(*) FROM tracks").fetchone()[0]
+
+def search(q, limit=30):
+    """Сначала быстрый FTS5-поиск по началу слов; если пусто, поиск по подстроке."""
+    toks = re.findall(r"\w+", q.lower())
+    if not toks:
+        return []
+    fts = " ".join(f'"{t}"*' for t in toks)
+    rows = con.execute(
+        "SELECT t.id, t.file_id, t.title, t.performer FROM tracks_fts "
+        "JOIN tracks t ON t.id = tracks_fts.rowid "
+        "WHERE tracks_fts MATCH ? ORDER BY bm25(tracks_fts) LIMIT ?",
+        (fts, limit)).fetchall()
+    if rows:
+        return rows
+    where = " AND ".join("norm LIKE ?" for _ in toks)
+    return con.execute(
+        f"SELECT id, file_id, title, performer FROM tracks WHERE {where} LIMIT ?",
+        [f"%{t}%" for t in toks] + [limit]).fetchall()
+
+
+def get(track_id):
+    return con.execute("SELECT file_id, msg_id FROM tracks WHERE id=?",
+                       (track_id,)).fetchone()
+
+
+def commit():
+    con.commit()
