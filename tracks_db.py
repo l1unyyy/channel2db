@@ -42,9 +42,24 @@ def clean(s):
         s = p.sub("", s)
     return re.sub(r"\s+", " ", s).strip(" -–—_")
 
+# to normalize title, performer and dedup key
 def prepare(title, performer):
     title, performer = clean(title), clean(performer)
     if not performer and " - " in title:
         performer, title = [x.strip() for x in title.split(" - ", 1)]
     norm = re.sub(r"[\W_]+", "", f"{performer}{title}".lower())
     return title, performer, norm
+
+def add(uid, file_id, msg_id, title, performer, source="telegram_channel"):
+    title, performer, norm = prepare(title, performer)
+    if not norm:
+        return False
+    cur = con.execute(
+        "INSERT OR IGNORE INTO tracks(uid,norm,file_id,msg_id,title,performer,source)"
+        " VALUES(?,?,?,?,?,?,?)",
+        (uid, norm, file_id, msg_id, title, performer, source))
+    if cur.rowcount != 1:
+        return False
+    con.execute("INSERT INTO tracks_fts(rowid, title, performer) VALUES (?,?,?)",
+                (cur.lastrowid, title, performer))
+    return True
