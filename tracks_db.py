@@ -27,3 +27,11 @@ DROP TRIGGER IF EXISTS tracks_ai;
 DROP TRIGGER IF EXISTS tracks_ad;
 DROP TRIGGER IF EXISTS tracks_au;
 """)
+
+TLD = r"(?:net|ru|com|org|me|su|ua|fm|cc|info|biz)"
+JUNK = [
+    re.compile(rf"\s*[\[(][^\])]*\.{TLD}[^\])]*[\])]", re.I),   
+    re.compile(rf"\s*\b[\w-]+\.{TLD}\s*$", re.I),                
+    re.compile(r"\s*[\[(]\s*без рекламы\s*[\])]", re.I),         
+    re.compile(r"<unknown>", re.I),
+]
