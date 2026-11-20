@@ -35,3 +35,16 @@ JUNK = [
     re.compile(r"\s*[\[(]\s*без рекламы\s*[\])]", re.I),         
     re.compile(r"<unknown>", re.I),
 ]
+
+def clean(s):
+    s = s or ""
+    for p in JUNK:
+        s = p.sub("", s)
+    return re.sub(r"\s+", " ", s).strip(" -–—_")
+
+def prepare(title, performer):
+    title, performer = clean(title), clean(performer)
+    if not performer and " - " in title:
+        performer, title = [x.strip() for x in title.split(" - ", 1)]
+    norm = re.sub(r"[\W_]+", "", f"{performer}{title}".lower())
+    return title, performer, norm
