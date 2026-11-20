@@ -1,0 +1,4 @@
+.tracks.db 
+.tracks.db-wal 
+.tracks.db-shm
+.channel2db_pos.txt
