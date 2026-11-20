@@ -50,6 +50,7 @@ def prepare(title, performer):
     norm = re.sub(r"[\W_]+", "", f"{performer}{title}".lower())
     return title, performer, norm
 
+# add dedup-aware insert with fts sync
 def add(uid, file_id, msg_id, title, performer, source="telegram_channel"):
     title, performer, norm = prepare(title, performer)
     if not norm:
@@ -63,3 +64,11 @@ def add(uid, file_id, msg_id, title, performer, source="telegram_channel"):
     con.execute("INSERT INTO tracks_fts(rowid, title, performer) VALUES (?,?,?)",
                 (cur.lastrowid, title, performer))
     return True
+
+
+def find(uid, title, performer):
+    _, _, norm = prepare(title, performer)
+    return con.execute("SELECT id, file_id, msg_id FROM tracks WHERE uid=? OR norm=?",
+                       (uid, norm)).fetchone()
+def count():
+    return con.execute("SELECT COUNT(*) FROM tracks").fetchone()[0]
